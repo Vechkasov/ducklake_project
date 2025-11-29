@@ -1,3 +1,0 @@
-clickhouse-driver>=0.2.4
-clickhouse-sqlalchemy==0.2.6
-psycopg-binary
