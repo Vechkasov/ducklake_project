@@ -1,8 +1,8 @@
 
-FROM python:3.8.13
+FROM python:3.10-slim
 
 RUN pip install --user psycopg2-binary==2.9.9 'apache-airflow[postgres,clickhouse,minio]==2.10.2' \
- --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.8.txt"
+ --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.10.txt"
 
 COPY requierments.txt .
 RUN pip install --user --no-cache-dir -r requierments.txt

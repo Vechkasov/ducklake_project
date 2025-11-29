@@ -8,9 +8,9 @@ from airflow.exceptions import AirflowException
 from airflow.models import Variable
 from minio import Minio
 
-MINIO_HOST = Variable.get('MINIO_HOST')
-MINIO_KEY = Variable.get('MINIO_KEY')
-MINIO_SECRET = Variable.get('MINIO_SECRET')
+from utils import load_chunk, dds_update
+from config import MINIO_HOST, MINIO_SECRET, MINIO_KEY
+
 
 default_args = {
     'owner': 'data_engineer',
@@ -71,7 +71,7 @@ def download_and_save_to_minio(**context):
             with zip_file.open(zip_filename) as jsonl_file:
                 jsonl_content = jsonl_file.read()
                 
-                object_name = f"{dimension}/{year}-{month}-{day}-H{hour}.jsonl"
+                object_name = f"data/{dimension}/{year}-{month}-{day}-H{hour}.jsonl"
                 
                 data_stream = io.BytesIO(jsonl_content)
                 data_length = len(jsonl_content)
@@ -135,17 +135,36 @@ with DAG(
     dimension_tasks = []
     
     for dimension in DIMENSIONS:
-        task = PythonOperator(
+        load = PythonOperator(
             task_id=f'process_{dimension}',
             python_callable=download_and_save_to_minio,
             provide_context=True,
             params={
                 'dimension': dimension,
-                'bucket_name': 'raw'
+                'bucket_name': 'ducklake'
             },
             trigger_rule='all_done'
         )
-        
-        dimension_tasks.append(task)
-    
-    dimension_tasks
+
+        insert = PythonOperator(
+            task_id=f'insert_{dimension}',
+            python_callable=load_chunk,
+            provide_context=True,
+            params={
+                'dimension': dimension,
+                'bucket_name': 'ducklake'
+            },
+            trigger_rule='all_done'
+        )
+
+
+        load >> insert
+        dimension_tasks.append(insert)
+
+    update = PythonOperator(
+            task_id=f'update_dds',
+            python_callable=dds_update,
+            provide_context=True,
+            trigger_rule='all_done'
+        )
+dimension_tasks >> update
