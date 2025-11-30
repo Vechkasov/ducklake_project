@@ -5,10 +5,9 @@ import io
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.exceptions import AirflowException
-from airflow.models import Variable
 from minio import Minio
 
-from utils import load_chunk, stage_update, mart_update, clean_files
+from utils import load_chunk, stage_update, mart_update
 from config import MINIO_HOST, MINIO_SECRET, MINIO_KEY
 
 

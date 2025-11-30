@@ -102,7 +102,8 @@ def stage_update(**context):
 
 
 def mart_update(**context):
-    tables = ['campaign_purchase_analysis_hourly', 'click_conversion_rates_hourly', 'events_distribution_hourly', 'purchased_products_count_hourly', 'top_performing_products']
+    tables = ['campaign_purchase_analysis_hourly', 'click_conversion_rates_hourly', 'events_distribution_hourly', 
+              'purchased_products_count_hourly', 'top_performing_products', 'users_segments_agg', 'users_purchases_segments_agg']
     execution_date = context['execution_date']
     with duckdb.connect() as conn:
         conn.execute("""
@@ -130,15 +131,9 @@ def mart_update(**context):
 def clean_files(**context):
     execution_date = context['execution_date']
     with duckdb.connect() as conn:
-        conn.execute("""
-            INSTALL httpfs;   -- LOAD httpfs;
-            INSTALL postgres; -- LOAD postgres;
-            INSTALL ducklake; -- LOAD ducklake;
-        """)
+        create_secrets(conn)
 
-        clean_query = """CALL ducklake_cleanup_old_files('ducklake', 
-                                    cleanup_all => true)"""
-        
-        print(clean_query)
-        conn.sql(clean_query)
+        conn.sql("""
+                    CALL ducklake_cleanup_old_files('lake', 
+                                    cleanup_all => true)""")
         print('Done!')
