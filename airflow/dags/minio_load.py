@@ -8,7 +8,7 @@ from airflow.exceptions import AirflowException
 from airflow.models import Variable
 from minio import Minio
 
-from utils import load_chunk, dds_update
+from utils import load_chunk, stage_update, mart_update, clean_files
 from config import MINIO_HOST, MINIO_SECRET, MINIO_KEY
 
 
@@ -161,10 +161,17 @@ with DAG(
         load >> insert
         dimension_tasks.append(insert)
 
-    update = PythonOperator(
-            task_id=f'update_dds',
-            python_callable=dds_update,
+    update_stage = PythonOperator(
+            task_id=f'update_stage',
+            python_callable=stage_update,
             provide_context=True,
             trigger_rule='all_done'
         )
-dimension_tasks >> update
+    update_mart = PythonOperator(
+            task_id=f'update_mart',
+            python_callable=mart_update,
+            provide_context=True,
+            trigger_rule='all_done'
+        )
+
+dimension_tasks >> update_stage >> update_mart 

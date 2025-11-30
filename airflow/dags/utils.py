@@ -75,8 +75,8 @@ def load_chunk(**context):
             raise(f"Загрузка не выполнена {e}")
 
 
-def dds_update(**context):
-    tables = ['events_agg_daily', 'medium_purchases_agg_daily', 'users_agg_daily']
+def stage_update(**context):
+    tables = ['conversion', 'devices', 'events', 'geo', 'purchases', 'session_info', 'transitions']
     execution_date = context['execution_date']
     with duckdb.connect() as conn:
         conn.execute("""
@@ -88,14 +88,57 @@ def dds_update(**context):
     with duckdb.connect() as conn:
         create_secrets(conn)
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        folder = os.path.join(current_dir, 'sql')
+        folder = os.path.join(current_dir, 'sql/stage')
         for t in tables:
-            sql = f"""DROP TABLE IF EXISTS dds.{t}"""
-            print(f'{sql}')
+            sql = f"""DROP TABLE IF EXISTS stage.{t}"""
+            #print(f'{sql}')
             conn.sql(sql)
         for file_name in os.listdir(folder):
             with open(os.path.join(folder, file_name), 'r') as f:
                 query = f.read()
-                print(f"{query}\n")
+                #print(f"{query}\n")
                 conn.sql(query)
     print(f'Загрузка завершена за {execution_date}')
+
+
+def mart_update(**context):
+    tables = ['campaign_purchase_analysis_hourly', 'click_conversion_rates_hourly', 'events_distribution_hourly', 'purchased_products_count_hourly', 'top_performing_products']
+    execution_date = context['execution_date']
+    with duckdb.connect() as conn:
+        conn.execute("""
+            INSTALL httpfs;   -- LOAD httpfs;
+            INSTALL postgres; -- LOAD postgres;
+            INSTALL ducklake; -- LOAD ducklake;
+        """)
+
+    with duckdb.connect() as conn:
+        create_secrets(conn)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        folder = os.path.join(current_dir, 'sql/mart')
+        for t in tables:
+            sql = f"""DROP TABLE IF EXISTS mart.{t}"""
+            #print(f'{sql}')
+            conn.sql(sql)
+        for file_name in os.listdir(folder):
+            with open(os.path.join(folder, file_name), 'r') as f:
+                query = f.read()
+                #print(f"{query}\n")
+                conn.sql(query)
+    print(f'Загрузка завершена за {execution_date}')
+
+
+def clean_files(**context):
+    execution_date = context['execution_date']
+    with duckdb.connect() as conn:
+        conn.execute("""
+            INSTALL httpfs;   -- LOAD httpfs;
+            INSTALL postgres; -- LOAD postgres;
+            INSTALL ducklake; -- LOAD ducklake;
+        """)
+
+        clean_query = """CALL ducklake_cleanup_old_files('ducklake', 
+                                    cleanup_all => true)"""
+        
+        print(clean_query)
+        conn.sql(clean_query)
+        print('Done!')
