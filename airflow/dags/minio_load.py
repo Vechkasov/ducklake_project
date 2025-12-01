@@ -28,7 +28,7 @@ def download_and_save_to_minio(**context):
     
     year = execution_date.year
     month = f"{execution_date.month}"
-    day = f"{execution_date.day}"
+    day = f"{execution_date.day:02d}"
     hour = f"{execution_date.hour:02d}"
     
     dimension = context['params']['dimension']

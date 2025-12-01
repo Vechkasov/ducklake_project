@@ -50,7 +50,7 @@ def load_chunk(**context):
     
     year = execution_date.year
     month = f"{execution_date.month}"
-    day = f"{execution_date.day}"
+    day = f"{execution_date.day:02d}"
     hour = f"{execution_date.hour:02d}"
 
     filename = f"{year}-{month}-{day}-H{hour}"
