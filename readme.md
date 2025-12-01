@@ -39,7 +39,24 @@ jupyterlab>=4,<5 notebook>=7,<8 duckdb==1.4.* duckdb-engine>=0.10 boto3==1.41.0 
 ![](images/airflow.png)
 
 > Ввиду отсутствия **dbt** в проекте, сборка витрин осуществляется по расписанию через **airflow**
+Описание процесса каждый час:
+ - Параллельная выгрузка из источника и сохранение в Minio
+ - Параллельная вставка в raw-слой ducklake
+ - Последовательное обновление витрин в stage и mart.
+Каждый день запускается процесс очистки файлов из ducklake.
+
+Запуск airflow в docker:
+```bash
+cd airflow
+docker compose up
+```
 
 ## Streamlit (http://217.16.17.159:8501/)
 Образ для визуализации данных, обращается к **duclake** и вытаскивает данные через **minio**:
 ![](images/streamlit.png)
+
+Запуск streamlit в docker:
+```bash
+cd streamlit
+docker compose up
+```
